@@ -5,6 +5,7 @@ moves around it, blurring the image progressively as the hinge opens or closes. 
 moving and it settles back into place. Your apps stay clickable and keep keyboard focus
 the whole time.
 
+![The desktop held sharp on a tilted plane, with a blurred copy of it filling the panel behind](Docs/preview.png)
 
 ## Requirements
 
