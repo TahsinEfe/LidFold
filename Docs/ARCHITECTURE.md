@@ -24,7 +24,7 @@ test without a display, a GPU or a hinge.
 | `AnchorEngine` | Holds the angle the image is pinned to and eases it back once the lid stops moving. Time is injected. |
 | `ExponentialSmoother` | Frame-rate independent low-pass filter for the raw readings. |
 | `EffectSettings` | The user's options, plus the derived `ProjectionMode`. |
-| `EffectIntensity` | How hard the effect pushes. The gain applies only while the lid is closing. |
+| `EffectIntensity` | How hard the effect pushes: counter-rotation gain, blur scale and how far the plane pulls away. All apply only while the lid is closing. |
 | `FoldEffectParameters` | The per-frame input to the renderer. |
 | `EffectStatus` | What the menu bar reports. |
 | `LidAngleSource`, `DisplayFrameSource`, `SettingsStore` | The three seams the outer layers plug into. |
@@ -71,9 +71,10 @@ The rest of the layer is deliberately dumb:
   every frame, and it avoids the speckling that sparse disc sampling produces.
 - `FrameTextureCache` wraps a capture frame as a texture without copying it, and holds both
   the wrapper and the pixel buffer alive until the GPU has finished reading them.
-- `RenderDiagnostics` renders a flat white source offscreen and asserts that the blur
-  crosses the projected border, softens inward, tightens near the hinge and disappears
-  entirely when blur is switched off. It never touches the real desktop.
+- `RenderDiagnostics` renders a flat white source offscreen and asserts that the held
+  plane shrinks as the lid closes, that its content stays sharp rather than being blurred
+  with everything else, that the surround behind it is the dimmed desktop, and that
+  switching blur off clears the surround. It never touches the real desktop.
 
 ## Why the overlay hides itself
 

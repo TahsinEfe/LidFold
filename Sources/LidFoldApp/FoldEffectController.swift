@@ -196,6 +196,7 @@ public final class FoldEffectController: FoldMenuActions {
             foldDelta: smoother.value,
             progressiveBlur: settings.progressiveBlur,
             blurScale: settings.intensity.blurScale,
+            planeInset: settings.intensity.planeInset,
             projection: settings.projection
         )
         status = isStarting ? .starting : (isSimulating ? .simulating : .active)

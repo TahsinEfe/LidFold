@@ -64,10 +64,11 @@ filming the effect. Options are remembered between launches.
 3. **A Metal shader reshapes the frame.** The angle difference moves the image's pixels so
    the content appears to hold its angle while the panel tilts around it. It is an
    approximation of a fixed viewpoint, not head tracking.
-4. **Metal Performance Shaders sell the effect.** Four increasingly blurred copies of the
-   frame are blended per pixel: more movement means more blur, and the top of the panel
-   gets more than the area near the hinge. The image's own boundary softens too, rather
-   than ending in a hard cut.
+4. **The plane pulls away from the panel.** As the lid closes the desktop shrinks towards
+   the centre and stays readable there. The space it leaves is filled with a heavily
+   blurred copy of the same desktop, pushed back so it reads as depth rather than as a
+   second, wrongly placed screen. Four increasingly blurred copies of the frame are kept
+   for this, and blended per pixel.
 5. **It settles when you stop.** The reference angle eases onto the current one, the
    overlay hides, and the real desktop is back. The overlay never takes focus and lets
    every click through.

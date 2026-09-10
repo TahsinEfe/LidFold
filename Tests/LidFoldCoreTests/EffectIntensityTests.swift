@@ -14,11 +14,12 @@ final class EffectIntensityTests: XCTestCase {
         XCTAssertEqual(EffectIntensity.subtle.shape(0.4), 0.4, accuracy: 0.0001)
     }
 
-    func testGainAndBlurRiseTogetherAcrossTheLevels() {
+    func testEveryLevelRisesTogether() {
         let ordered = EffectIntensity.allCases
         for (lower, higher) in zip(ordered, ordered.dropFirst()) {
             XCTAssertLessThan(lower.closingGain, higher.closingGain)
             XCTAssertLessThan(lower.blurScale, higher.blurScale)
+            XCTAssertLessThan(lower.planeInset, higher.planeInset)
         }
     }
 

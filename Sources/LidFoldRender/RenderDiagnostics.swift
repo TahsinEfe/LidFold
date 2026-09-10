@@ -37,6 +37,7 @@ public enum RenderDiagnostics {
                 foldDelta: level.shape(referenceFold),
                 progressiveBlur: true,
                 blurScale: level.blurScale,
+                planeInset: level.planeInset,
                 projection: .perspective
             )
             stills.append(("intensity-" + level.rawValue, parameters))
@@ -56,38 +57,47 @@ public enum RenderDiagnostics {
         let restore = renderer.parameters
         defer { renderer.parameters = restore }
 
-        renderer.parameters = FoldEffectParameters(
-            foldDelta: checkAngle, progressiveBlur: true, projection: .perspective
-        )
-        let blurred = NSBitmapImageRep(cgImage: try renderer.renderImage(size: previewSize, source: source))
+        func render(planeInset: Double, blur: Bool) throws -> NSBitmapImageRep {
+            renderer.parameters = FoldEffectParameters(
+                foldDelta: checkAngle,
+                progressiveBlur: blur,
+                planeInset: planeInset,
+                projection: .perspective
+            )
+            return NSBitmapImageRep(cgImage: try renderer.renderImage(size: previewSize, source: source))
+        }
 
-        renderer.parameters.progressiveBlur = false
-        let sharp = NSBitmapImageRep(cgImage: try renderer.renderImage(size: previewSize, source: source))
+        let row = 200
+        let flat = try render(planeInset: 0, blur: true)
+        let inset = try render(planeInset: 0.7, blur: true)
+        let unblurred = try render(planeInset: 0.7, blur: false)
 
-        let top = 125
-        let bottom = 500
-        let left = projectedLeftEdge(atRow: top)
-        let right = Int(previewSize.width) - 1 - left
+        guard let flatEdge = leftEdge(of: flat, row: row), let insetEdge = leftEdge(of: inset, row: row) else {
+            throw RenderCheckFailure.assertion("Render check failed: the held plane was not found on the row sampled.")
+        }
 
-        try expect(brightness(blurred, left - 8, top) > 0.1, "the blur was clipped at the left edge")
-        try expect(brightness(blurred, right + 8, top) > 0.1, "the blur was clipped at the right edge")
-        try expect(brightness(blurred, left + 8, top) < 0.95, "the image boundary did not soften inward")
-        try expect(brightness(sharp, left - 8, top) < 0.04, "the border feathered with blur switched off")
+        try expect(insetEdge > flatEdge, "the plane does not shrink as the lid closes")
         try expect(
-            brightness(blurred, projectedLeftEdge(atRow: bottom) - 8, bottom) < 0.04,
-            "the blur is not tighter near the hinge"
+            brightness(inset, insetEdge + 12, row) > 0.97,
+            "the content is softened instead of staying sharp inside the plane"
         )
-        try expect(brightness(blurred, 500, top) > 0.99, "the edge treatment leaked into the image interior")
+        let surround = brightness(inset, insetEdge - 12, row)
+        try expect(
+            surround > 0.4 && surround < 0.95,
+            "the surround is not the desktop pushed back, it measured \(surround)"
+        )
+        try expect(
+            brightness(unblurred, insetEdge - 12, row) < 0.04,
+            "the surround is drawn even with blur switched off"
+        )
+        try expect(brightness(inset, 500, row) > 0.99, "the surround leaked into the middle of the plane")
 
-        return "blur crosses both borders, softens inward, tightens near the hinge and respects blur-off"
+        return "the plane shrinks and stays sharp, the surround sits behind it, and blur-off clears it"
     }
 
-    /// Where the projected image starts on a given row, from the perspective projection
-    /// in the shader: the eye sits 1.6 screen heights back, so the surface shrinks by
-    /// `depth / 3.2` on each side.
-    private static func projectedLeftEdge(atRow row: Int) -> Int {
-        let height = 1 - (Double(row) + 0.5) / previewSize.height
-        return Int(previewSize.width * height * sin(checkAngle) / 3.2)
+    /// The first column on `row` that belongs to the held plane rather than the surround.
+    private static func leftEdge(of image: NSBitmapImageRep, row: Int) -> Int? {
+        (0..<Int(previewSize.width) / 2).first { brightness(image, $0, row) > 0.97 }
     }
 
     private static func brightness(_ image: NSBitmapImageRep, _ x: Int, _ y: Int) -> CGFloat {

@@ -15,8 +15,15 @@ enum FoldShader {
         float foldDelta;
         float aspectRatio;
         float blurStrength;
+        float planeInset;
         int projection;
     };
+
+    // The held plane stays readable; the blur belongs around it, not on it.
+    constant float contentBlurFraction = 0.32;
+    // The surround is the same desktop, pushed back rather than reprinted at full
+    // strength, so it reads as depth instead of a second copy of the content.
+    constant float surroundDim = 0.82;
 
     struct VertexOut {
         float4 position [[position]];
@@ -84,6 +91,14 @@ enum FoldShader {
         return coverage.x * coverage.y;
     }
 
+    // Closing the lid pulls the plane away, so it covers less of the panel. Sampling a
+    // wider region of the source shrinks the content towards the centre and leaves room
+    // for the surround.
+    static float2 shrinkTowardsCentre(float2 uv, float angle, float planeInset) {
+        float expand = 1.0 + planeInset * abs(sin(angle));
+        return (uv - 0.5) * expand + 0.5;
+    }
+
     fragment float4 foldFragment(VertexOut in [[stage_in]],
                                  texture2d<float> sharp [[texture(0)]],
                                  texture2d<float> level1 [[texture(1)]],
@@ -96,14 +111,20 @@ enum FoldShader {
         float angle = clamp(uniforms.foldDelta, -0.65, 1.25);
         float aspectRatio = max(0.001, uniforms.aspectRatio);
         float2 uv = projectedCoordinate(in.uv, angle, aspectRatio, uniforms.projection);
+        uv = shrinkTowardsCentre(uv, angle, uniforms.planeInset);
 
-        float radius = blurRadius(in.uv.y, angle, uniforms.blurStrength);
+        float radius = blurRadius(in.uv.y, angle, uniforms.blurStrength) * contentBlurFraction;
         float3 colour = blendLevels(radius, uv, linearSampler, sharp, level1, level2, level3, level4);
 
         float2 sourceSize = float2(sharp.get_width(), sharp.get_height());
         float mask = edgeCoverage(uv, radius, sourceSize, fwidth(uv));
 
-        const float3 surround = float3(0.02, 0.035, 0.05);
+        // With blur switched off there is nothing to fill the surround with that would not
+        // read as a second, wrongly placed desktop, so it stays dark.
+        float3 surround = uniforms.blurStrength > 0.0
+            ? level4.sample(linearSampler, in.uv).rgb * surroundDim
+            : float3(0.02, 0.035, 0.05);
+
         return float4(mix(surround, colour, mask), 1.0);
     }
     """#

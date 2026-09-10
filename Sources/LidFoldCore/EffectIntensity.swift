@@ -31,6 +31,16 @@ public enum EffectIntensity: String, CaseIterable, Equatable, Sendable {
         }
     }
 
+    /// How far the plane pulls away from the panel edges while the lid closes.
+    public var planeInset: Double {
+        switch self {
+        case .subtle: return 0.18
+        case .standard: return 0.4
+        case .strong: return 0.7
+        case .extreme: return 1.05
+        }
+    }
+
     public var displayName: String {
         switch self {
         case .subtle: return "Subtle"

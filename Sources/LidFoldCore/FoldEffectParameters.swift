@@ -8,6 +8,8 @@ public struct FoldEffectParameters: Equatable, Sendable {
     public var progressiveBlur: Bool
     /// Multiplier on the blur radius, from ``EffectIntensity``.
     public var blurScale: Double
+    /// How far the held plane shrinks towards the centre as the lid closes.
+    public var planeInset: Double
     public var projection: ProjectionMode
 
     public static let identity = FoldEffectParameters(foldDelta: 0, progressiveBlur: true, projection: .parallel)
@@ -16,11 +18,13 @@ public struct FoldEffectParameters: Equatable, Sendable {
         foldDelta: Double,
         progressiveBlur: Bool,
         blurScale: Double = 1,
+        planeInset: Double = 0,
         projection: ProjectionMode
     ) {
         self.foldDelta = foldDelta
         self.progressiveBlur = progressiveBlur
         self.blurScale = blurScale
+        self.planeInset = planeInset
         self.projection = projection
     }
 
