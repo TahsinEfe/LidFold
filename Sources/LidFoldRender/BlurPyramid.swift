@@ -13,6 +13,7 @@ final class BlurPyramid {
     private var levels: [MTLTexture] = []
     private var filters: [MPSImageGaussianBlur] = []
     private var needsRefresh = true
+    private var appliedSigmaScale: Float = 1
 
     var textures: [MTLTexture] { levels }
     var levelCount: Int { BlurPyramid.sigmas.count }
@@ -26,8 +27,16 @@ final class BlurPyramid {
         needsRefresh = true
     }
 
-    func encode(into commandBuffer: MTLCommandBuffer, source: MTLTexture) {
-        if levels.first?.width != source.width || levels.first?.height != source.height {
+    /// - Parameter sigmaScale: Multiplies every level's radius. Scaling the filters
+    ///   rather than the shader's blend thresholds is what actually raises the ceiling:
+    ///   the blend saturates at the widest level, so a larger radius alone would only
+    ///   reach the same maximum sooner.
+    func encode(into commandBuffer: MTLCommandBuffer, source: MTLTexture, sigmaScale: Float = 1) {
+        let scale = max(0.05, sigmaScale)
+        if levels.first?.width != source.width
+            || levels.first?.height != source.height
+            || scale != appliedSigmaScale {
+            appliedSigmaScale = scale
             allocate(matching: source)
         }
         guard needsRefresh else { return }
@@ -48,9 +57,9 @@ final class BlurPyramid {
         descriptor.storageMode = .private
 
         levels = (0..<BlurPyramid.sigmas.count).compactMap { _ in device.makeTexture(descriptor: descriptor) }
-        let scale = Float(source.height) / BlurPyramid.referenceHeight
+        let heightScale = Float(source.height) / BlurPyramid.referenceHeight
         filters = BlurPyramid.sigmas.map { sigma in
-            let filter = MPSImageGaussianBlur(device: device, sigma: sigma * scale)
+            let filter = MPSImageGaussianBlur(device: device, sigma: sigma * heightScale * appliedSigmaScale)
             filter.edgeMode = .clamp
             return filter
         }

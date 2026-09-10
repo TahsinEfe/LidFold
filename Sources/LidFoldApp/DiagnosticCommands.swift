@@ -1,8 +1,10 @@
 import AppKit
 import Foundation
 import LidFoldCore
+import LidFoldCapture
 import LidFoldRender
 import LidFoldSensing
+import ScreenCaptureKit
 import MetalKit
 
 /// The command line surface. These exist so the sensor and the shader can be checked on
@@ -31,6 +33,28 @@ public enum DiagnosticCommands {
         let sensor = HIDLidAngleSource()
         let summary = sensor.availability.summary
         return sensor.readAngle() == nil ? .failure(summary) : .success(summary)
+    }
+
+    /// Asks ScreenCaptureKit what it can share. Run through `open` so macOS attributes
+    /// the request to the app bundle rather than to the terminal that started it.
+    public static func checkCapture() async -> Result {
+        let identity = "Bundle: \(Bundle.main.bundleURL.path)\nIdentifier: \(Bundle.main.bundleIdentifier ?? "none")"
+        if !ScreenRecordingPermission.isGranted() {
+            ScreenRecordingPermission.request()
+        }
+        do {
+            let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
+            let displays = content.displays
+                .map { "\($0.displayID) \($0.width)x\($0.height)" }
+                .joined(separator: ", ")
+            return .success("Screen Recording is granted.\n\(identity)\nShareable displays: \(displays)")
+        } catch {
+            let error = error as NSError
+            let hint = CaptureError.isPermissionDenial(error)
+                ? "Screen Recording is not granted for this bundle."
+                : error.localizedDescription
+            return .failure("\(hint)\n\(identity)\nError: \(error.domain) (\(error.code))")
+        }
     }
 
     /// Renders the reference stills and runs the shader checks entirely offscreen.

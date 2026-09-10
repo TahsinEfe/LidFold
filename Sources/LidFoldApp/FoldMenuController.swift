@@ -76,6 +76,7 @@ public final class FoldMenuController: NSObject, NSMenuDelegate {
         add(title: "Pause Before Anchoring", action: nil).submenu = delaySubmenu(selected: state.settings.settleDelay)
 
         menu.addItem(.separator())
+        add(title: "Effect Strength", action: nil).submenu = intensitySubmenu(selected: state.settings.intensity)
         add(title: "Progressive Blur", action: #selector(toggleBlur), checked: state.settings.progressiveBlur)
         add(title: "Hold Content Angle", action: #selector(toggleHoldAngle), checked: state.settings.holdContentAngle)
         add(title: "Perspective Taper", action: #selector(togglePerspective), checked: state.settings.perspectiveTaper)
@@ -86,6 +87,18 @@ public final class FoldMenuController: NSObject, NSMenuDelegate {
         menu.addItem(.separator())
         add(title: "Screen Recording Settings…", action: #selector(openScreenRecordingSettings))
         add(title: "Quit LidFold", action: #selector(quit))
+    }
+
+    private func intensitySubmenu(selected: EffectIntensity) -> NSMenu {
+        let submenu = NSMenu()
+        for intensity in EffectIntensity.allCases {
+            let item = NSMenuItem(title: intensity.displayName, action: #selector(selectIntensity(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = intensity.rawValue
+            item.state = intensity == selected ? .on : .off
+            submenu.addItem(item)
+        }
+        return submenu
     }
 
     private func delaySubmenu(selected: TimeInterval) -> NSMenu {
@@ -120,6 +133,12 @@ public final class FoldMenuController: NSObject, NSMenuDelegate {
     @objc private func toggleHoldAngle() { actions?.updateSettings { $0.holdContentAngle.toggle() } }
     @objc private func togglePerspective() { actions?.updateSettings { $0.perspectiveTaper.toggle() } }
     @objc private func toggleReadout() { actions?.updateSettings { $0.showsAngleReadout.toggle() } }
+
+    @objc private func selectIntensity(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String,
+              let intensity = EffectIntensity(rawValue: raw) else { return }
+        actions?.updateSettings { $0.intensity = intensity }
+    }
 
     @objc private func selectDelay(_ sender: NSMenuItem) {
         let delay = sender.representedObject as? TimeInterval ?? AnchorConfiguration.defaultSettleDelay

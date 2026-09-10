@@ -6,13 +6,21 @@ public struct FoldEffectParameters: Equatable, Sendable {
     /// Counter-rotation in radians. Zero means the image is aligned with the lid.
     public var foldDelta: Double
     public var progressiveBlur: Bool
+    /// Multiplier on the blur radius, from ``EffectIntensity``.
+    public var blurScale: Double
     public var projection: ProjectionMode
 
     public static let identity = FoldEffectParameters(foldDelta: 0, progressiveBlur: true, projection: .parallel)
 
-    public init(foldDelta: Double, progressiveBlur: Bool, projection: ProjectionMode) {
+    public init(
+        foldDelta: Double,
+        progressiveBlur: Bool,
+        blurScale: Double = 1,
+        projection: ProjectionMode
+    ) {
         self.foldDelta = foldDelta
         self.progressiveBlur = progressiveBlur
+        self.blurScale = blurScale
         self.projection = projection
     }
 

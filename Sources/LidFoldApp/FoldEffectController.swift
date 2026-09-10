@@ -189,11 +189,13 @@ public final class FoldEffectController: FoldMenuActions {
         }
 
         anchor.update(angle: angle, now: now, autoAnchorEnabled: settings.autoAnchor && !isSimulating)
-        smoother.step(towards: anchor.foldDelta(for: angle), deltaTime: step)
+        let target = settings.intensity.shape(anchor.foldDelta(for: angle))
+        smoother.step(towards: target, deltaTime: step)
 
         renderer.parameters = FoldEffectParameters(
             foldDelta: smoother.value,
             progressiveBlur: settings.progressiveBlur,
+            blurScale: settings.intensity.blurScale,
             projection: settings.projection
         )
         status = isStarting ? .starting : (isSimulating ? .simulating : .active)
@@ -239,6 +241,12 @@ public final class FoldEffectController: FoldMenuActions {
             isEnabled = false
             status = .unavailable(reason: "No built-in display")
             return
+        }
+
+        // Asking first means the user gets the system dialog rather than an error alert
+        // explaining a permission they were never offered.
+        if !ScreenRecordingPermission.isGranted() {
+            ScreenRecordingPermission.request()
         }
 
         overlay.fit(to: target.screen)

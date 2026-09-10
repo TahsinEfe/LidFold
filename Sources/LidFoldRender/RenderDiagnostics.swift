@@ -19,18 +19,33 @@ public enum RenderDiagnostics {
     public static let previewSize = CGSize(width: 1000, height: 625)
     private static let checkAngle = 0.6
 
-    /// Writes the three reference stills used in the README and by manual review.
+    /// A fold a hand actually makes. The 35 degree stills are a deliberate extreme.
+    private static let referenceFold = 10.0 * .pi / 180
+
+    /// Writes the reference stills: the two projections at a large fold, then one still
+    /// per intensity at a realistic one, which is what the strength levels are tuned on.
     public static func writePreviews(_ renderer: FoldRenderer, to directory: URL) throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let stills: [(String, FoldEffectParameters)] = [
+
+        var stills: [(String, FoldEffectParameters)] = [
             ("open", FoldEffectParameters(foldDelta: 0, progressiveBlur: true, projection: .parallel)),
             ("folded", FoldEffectParameters(foldDelta: 35 * .pi / 180, progressiveBlur: true, projection: .parallel)),
             ("perspective", FoldEffectParameters(foldDelta: 35 * .pi / 180, progressiveBlur: true, projection: .perspective))
         ]
+        for level in EffectIntensity.allCases {
+            let parameters = FoldEffectParameters(
+                foldDelta: level.shape(referenceFold),
+                progressiveBlur: true,
+                blurScale: level.blurScale,
+                projection: .perspective
+            )
+            stills.append(("intensity-" + level.rawValue, parameters))
+        }
+
         for (name, parameters) in stills {
             renderer.parameters = parameters
             let image = try renderer.renderImage(size: previewSize)
-            try writePNG(image, to: directory.appendingPathComponent("\(name).png"))
+            try writePNG(image, to: directory.appendingPathComponent(name + ".png"))
         }
     }
 

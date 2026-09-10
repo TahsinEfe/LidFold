@@ -24,6 +24,7 @@ test without a display, a GPU or a hinge.
 | `AnchorEngine` | Holds the angle the image is pinned to and eases it back once the lid stops moving. Time is injected. |
 | `ExponentialSmoother` | Frame-rate independent low-pass filter for the raw readings. |
 | `EffectSettings` | The user's options, plus the derived `ProjectionMode`. |
+| `EffectIntensity` | How hard the effect pushes. The gain applies only while the lid is closing. |
 | `FoldEffectParameters` | The per-frame input to the renderer. |
 | `EffectStatus` | What the menu bar reports. |
 | `LidAngleSource`, `DisplayFrameSource`, `SettingsStore` | The three seams the outer layers plug into. |
@@ -63,7 +64,9 @@ The rest of the layer is deliberately dumb:
 - The Metal source lives in a Swift string and is compiled at launch. A `.metallib` would
   have to travel in a resource bundle that the hand-assembled `.app` would then need to
   carry and look up.
-- `BlurPyramid` keeps four Gaussian copies of the current frame. The shader blends between
+- `BlurPyramid` keeps four Gaussian copies of the current frame. `EffectIntensity` scales
+  the filters' sigmas rather than the shader's blend thresholds: the blend saturates at
+  the widest level, so a larger radius alone would only reach the same maximum sooner. The shader blends between
   them per pixel, which is far cheaper than varying a real blur radius across the surface
   every frame, and it avoids the speckling that sparse disc sampling produces.
 - `FrameTextureCache` wraps a capture frame as a texture without copying it, and holds both

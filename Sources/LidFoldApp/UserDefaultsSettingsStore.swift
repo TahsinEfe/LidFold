@@ -9,6 +9,7 @@ public final class UserDefaultsSettingsStore: SettingsStore {
         static let holdContentAngle = "holdContentAngle"
         static let perspectiveTaper = "perspectiveTaper"
         static let showsAngleReadout = "showsAngleReadout"
+        static let intensity = "intensity"
     }
 
     private let defaults: UserDefaults
@@ -22,7 +23,8 @@ public final class UserDefaultsSettingsStore: SettingsStore {
             Key.progressiveBlur: fallback.progressiveBlur,
             Key.holdContentAngle: fallback.holdContentAngle,
             Key.perspectiveTaper: fallback.perspectiveTaper,
-            Key.showsAngleReadout: fallback.showsAngleReadout
+            Key.showsAngleReadout: fallback.showsAngleReadout,
+            Key.intensity: fallback.intensity.rawValue
         ])
     }
 
@@ -33,6 +35,9 @@ public final class UserDefaultsSettingsStore: SettingsStore {
         settings.holdContentAngle = defaults.bool(forKey: Key.holdContentAngle)
         settings.perspectiveTaper = defaults.bool(forKey: Key.perspectiveTaper)
         settings.showsAngleReadout = defaults.bool(forKey: Key.showsAngleReadout)
+
+        settings.intensity = EffectIntensity(rawValue: defaults.string(forKey: Key.intensity) ?? "")
+            ?? EffectIntensity.default
 
         // A delay written by an older build may no longer be offered in the menu.
         let stored = defaults.double(forKey: Key.settleDelay)
@@ -49,5 +54,6 @@ public final class UserDefaultsSettingsStore: SettingsStore {
         defaults.set(settings.holdContentAngle, forKey: Key.holdContentAngle)
         defaults.set(settings.perspectiveTaper, forKey: Key.perspectiveTaper)
         defaults.set(settings.showsAngleReadout, forKey: Key.showsAngleReadout)
+        defaults.set(settings.intensity.rawValue, forKey: Key.intensity)
     }
 }

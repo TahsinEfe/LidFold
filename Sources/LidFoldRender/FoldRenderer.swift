@@ -108,7 +108,7 @@ public final class FoldRenderer: NSObject, MTKViewDelegate {
         // Refreshing the pyramid is the expensive part, so it is skipped while the fold
         // is too small for the blur to be visible anyway.
         if parameters.progressiveBlur && abs(parameters.foldDelta) > 0.003 {
-            blurPyramid.encode(into: commandBuffer, source: source)
+            blurPyramid.encode(into: commandBuffer, source: source, sigmaScale: Float(parameters.blurScale))
         }
 
         guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: pass) else {
@@ -156,7 +156,7 @@ public final class FoldRenderer: NSObject, MTKViewDelegate {
         // Diagnostic runs change the inputs without a new frame arriving, so the pyramid
         // has to be rebuilt explicitly.
         blurPyramid.invalidate()
-        blurPyramid.encode(into: commandBuffer, source: sourceTexture)
+        blurPyramid.encode(into: commandBuffer, source: sourceTexture, sigmaScale: Float(parameters.blurScale))
 
         let pass = MTLRenderPassDescriptor()
         pass.colorAttachments[0].texture = output

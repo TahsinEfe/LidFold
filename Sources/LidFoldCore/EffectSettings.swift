@@ -16,6 +16,7 @@ public struct EffectSettings: Equatable, Sendable {
     public var holdContentAngle: Bool
     public var perspectiveTaper: Bool
     public var showsAngleReadout: Bool
+    public var intensity: EffectIntensity
 
     public static let `default` = EffectSettings()
 
@@ -25,7 +26,8 @@ public struct EffectSettings: Equatable, Sendable {
         progressiveBlur: Bool = true,
         holdContentAngle: Bool = true,
         perspectiveTaper: Bool = false,
-        showsAngleReadout: Bool = false
+        showsAngleReadout: Bool = false,
+        intensity: EffectIntensity = .default
     ) {
         self.autoAnchor = autoAnchor
         self.settleDelay = settleDelay
@@ -33,6 +35,7 @@ public struct EffectSettings: Equatable, Sendable {
         self.holdContentAngle = holdContentAngle
         self.perspectiveTaper = perspectiveTaper
         self.showsAngleReadout = showsAngleReadout
+        self.intensity = intensity
     }
 
     public var projection: ProjectionMode {

@@ -28,7 +28,14 @@ if [ -n "${LIDFOLD_SIGN_IDENTITY:-}" ] \
   || ! cmp -s Info.plist "$APP/Contents/Info.plist"; then
   cp "$BIN_PATH/LidFold" "$APP/Contents/MacOS/LidFold"
   cp Info.plist "$APP/Contents/Info.plist"
+
+  # Launching the app leaves com.apple.provenance behind, and a synced Desktop adds
+  # Finder metadata of its own. codesign refuses to sign a bundle carrying either, so
+  # without this the signing step fails and the app keeps a stale, invalid signature.
+  # macOS then denies Screen Recording, which is hard to tell apart from a missing grant.
+  /usr/bin/xattr -cr "$APP"
   /usr/bin/codesign --force --sign "${LIDFOLD_SIGN_IDENTITY:--}" --identifier com.tahsinefe.lidfold "$APP"
+  /usr/bin/codesign --verify --strict "$APP"
   cp "$BIN_PATH/LidFold" "$STAMP"
   echo "Rebuilt $APP"
 else

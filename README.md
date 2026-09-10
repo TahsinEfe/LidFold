@@ -14,7 +14,8 @@ the whole time.
 - Screen Recording permission, which macOS asks for the first time you enable the effect
 
 The sensor interface is undocumented and support varies between models. Run
-`./Scripts/probe.sh` to find out whether your Mac exposes one before going any further.
+`./Scripts/probe.sh` to find out whether your Mac exposes one before going any further,
+and `./Scripts/capture-check.sh` to confirm the Screen Recording grant.
 
 ## Build and run
 
@@ -40,9 +41,14 @@ Recording when macOS asks.
 | Change the settling delay | **Pause Before Anchoring** → 0.15, 0.3, 0.5, 1 or 2 seconds |
 | Blur without the geometric distortion | Keep **Progressive Blur** on, turn **Hold Content Angle** off |
 | More dramatic distortion | Turn **Perspective Taper** on |
+| Change how hard the effect pushes | **Effect Strength** → Subtle, Standard, Strong or Extreme |
 | See the raw sensor reading | **Show Lid Angle in Menu Bar** |
 | Try it without touching the lid | Enable the effect, then **Simulate a Fold** |
 | Quit | **Quit LidFold** |
+
+**Effect Strength** amplifies the effect only while the lid is closing, which is the
+gesture people actually make; opening past the anchor stays at 1:1, where anything
+stronger reads as the image sliding off the panel. The default is **Strong**.
 
 Auto-anchor waits 150 ms by default and then eases back over 200 ms. Turn it off if you
 want the image to hold its original angle indefinitely, which is what you want while
