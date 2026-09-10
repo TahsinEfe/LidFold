@@ -58,6 +58,7 @@ public final class FoldEffectController: FoldMenuActions {
 
     private var frameSource: DisplayFrameSource?
     private var capturedDisplayID: CGDirectDisplayID?
+    private var hasAskedForPermission = false
 
     public init(
         sensor: LidAngleSource,
@@ -244,10 +245,21 @@ public final class FoldEffectController: FoldMenuActions {
             return
         }
 
-        // Asking first means the user gets the system dialog rather than an error alert
-        // explaining a permission they were never offered.
-        if !ScreenRecordingPermission.isGranted() {
-            ScreenRecordingPermission.request()
+        // The system dialog opens asynchronously and the API returns straight away, so
+        // starting the stream here would fail with -3801 and stack an error alert on top
+        // of the dialog the user is still reading. Ask, then stop and let them answer.
+        guard ScreenRecordingPermission.isGranted() else {
+            if hasAskedForPermission {
+                // macOS only ever asks once, so a second attempt means the answer is
+                // already on record and the switch has to be found in System Settings.
+                openScreenRecordingSettings()
+            } else {
+                hasAskedForPermission = true
+                ScreenRecordingPermission.request()
+            }
+            isEnabled = false
+            status = .unavailable(reason: "Allow Screen Recording, then reopen")
+            return
         }
 
         overlay.fit(to: target.screen)
