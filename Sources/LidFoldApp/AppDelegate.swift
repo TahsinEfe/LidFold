@@ -4,10 +4,12 @@ import LidFoldCore
 import LidFoldRender
 import LidFoldSensing
 import MetalKit
+import OSLog
 
 /// Composition root. It builds the object graph once and then does nothing but wire
 /// events between the status item, the menu and the effect controller.
 public final class AppDelegate: NSObject, NSApplicationDelegate {
+    private let logger = Logger(subsystem: "com.tahsinefe.lidfold", category: "App")
     private var controller: FoldEffectController?
     private var statusItem: StatusItemController?
     private var menuController: FoldMenuController?
@@ -19,7 +21,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
         guard let device = MTLCreateSystemDefaultDevice() else {
-            presentFatal(RendererError.metalUnavailable)
+            fail(with: RendererError.metalUnavailable)
             return
         }
 
@@ -27,7 +29,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         do {
             renderer = try FoldRenderer(device: device)
         } catch {
-            presentFatal(error)
+            fail(with: error)
             return
         }
 
@@ -56,7 +58,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                 showsReadout: controller.settings.showsAngleReadout
             )
         }
-        controller.onCaptureFailure = { [weak self] error in self?.presentCaptureFailure(error) }
+        controller.onCaptureFailure = { [weak self] error in self?.report(error) }
         controller.onQuitRequested = { NSApp.terminate(nil) }
 
         do {
@@ -65,7 +67,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             controller.hotKeyName = chord.displayName
         } catch {
             // A taken shortcut is reported in the menu rather than blocking startup.
-            NSLog("LidFold: %@", error.localizedDescription)
+            logger.notice("\(error.localizedDescription, privacy: .public)")
         }
 
         self.controller = controller
@@ -83,28 +85,15 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         false
     }
 
-    private func presentCaptureFailure(_ error: Error) {
+    /// Nothing here interrupts the user. The menu bar carries the status, and the detail
+    /// goes to the system log, which is where a background app belongs.
+    private func report(_ error: Error) {
         let error = error as NSError
-        let message = CaptureError.isPermissionDenial(error)
-            ? """
-              Allow LidFold in System Settings → Privacy & Security → Screen & System Audio Recording, \
-              then quit and reopen the app. If it is already allowed after a rebuild, remove the old \
-              LidFold entry and approve the new build.
-              """
-            : error.localizedDescription
-        present(message: "\(message)\n\n\(error.domain) (\(error.code))")
+        logger.error("Capture failed: \(error.domain, privacy: .public) (\(error.code)) \(error.localizedDescription, privacy: .public)")
     }
 
-    private func presentFatal(_ error: Error) {
-        present(message: error.localizedDescription)
+    private func fail(with error: Error) {
+        logger.fault("Cannot start: \(error.localizedDescription, privacy: .public)")
         NSApp.terminate(nil)
-    }
-
-    private func present(message: String) {
-        NSApp.activate(ignoringOtherApps: true)
-        let alert = NSAlert()
-        alert.messageText = "LidFold"
-        alert.informativeText = message
-        alert.runModal()
     }
 }

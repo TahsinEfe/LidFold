@@ -55,6 +55,8 @@ The rest of the layer is deliberately dumb:
 - `FoldMenuController` builds the options menu from a `MenuSnapshot` and holds no state of
   its own, so the menu and the running effect cannot drift apart.
 - `AppDelegate` is a composition root: it builds the graph once and wires the callbacks.
+  It never puts a dialog on screen: a background app that interrupts the user to report
+  its own trouble is worse than one that says so in its menu and logs the detail.
 
 ## Rendering
 
