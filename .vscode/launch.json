@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:LidFold}",
+            "name": "Debug LidFold",
+            "target": "LidFold",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug LidFold"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:LidFold}",
+            "name": "Release LidFold",
+            "target": "LidFold",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release LidFold"
+        }
+    ]
+}

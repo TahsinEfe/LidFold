@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 5.9
 import PackageDescription
 
 // LidFold is layered from the inside out. Every arrow points towards LidFoldCore,
@@ -24,6 +24,5 @@ let package = Package(
         .target(name: "LidFoldApp", dependencies: ["LidFoldCore", "LidFoldSensing", "LidFoldCapture", "LidFoldRender"]),
         .executableTarget(name: "LidFold", dependencies: ["LidFoldApp"]),
         .testTarget(name: "LidFoldCoreTests", dependencies: ["LidFoldCore"])
-    ],
-    swiftLanguageModes: [.v5]
+    ]
 )

@@ -22,18 +22,23 @@ No third-party dependencies.
 
 ## Signing and Screen Recording
 
-`build.sh` signs the bundle ad-hoc and leaves it alone when neither the executable nor
-`Info.plist` changed. This matters: re-signing gives the app a new code identity, and
-macOS then treats it as a different app and forgets the Screen Recording approval. If you
-do end up with a stale entry, remove **LidFold** under System Settings → Privacy &
-Security → Screen & System Audio Recording and approve the rebuilt app again.
+`build.sh` leaves the bundle alone when the executable, `Info.plist` and signing identity
+are all unchanged. If you do end up with a stale entry, remove **LidFold** under System
+Settings → Privacy & Security → Screen & System Audio Recording and approve the rebuilt
+app again.
 
-An ad-hoc signature changes on every rebuild, so macOS treats each build as a new app
-and the Screen Recording grant does not survive. Signing with a real identity gives the
-bundle a stable designated requirement, and the approval then persists across rebuilds.
-List what you have with `security find-identity -v -p codesigning`.
+Building into a folder synced by iCloud is workable but noisy: the file provider keeps
+re-stamping Finder metadata on the bundle, which is why the build clears extended
+attributes before signing and does not verify with `--strict`.
 
-Set `LIDFOLD_SIGN_IDENTITY` to sign with a real identity instead:
+macOS ties the Screen Recording approval to the app's signing identity, so an identity
+that changes between builds costs a permission prompt on every launch. An ad-hoc
+signature does exactly that. `build.sh` therefore picks the first real codesigning
+identity it finds, remembers the choice in `.build/bundle-stamp/identity`, and reuses it
+until you ask for a different one. List what you have with
+`security find-identity -v -p codesigning`.
+
+Override the choice with `LIDFOLD_SIGN_IDENTITY`:
 
 ```bash
 LIDFOLD_SIGN_IDENTITY="Developer ID Application: …" ./Scripts/build.sh release
