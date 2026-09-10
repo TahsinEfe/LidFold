@@ -5,7 +5,6 @@ moves around it, blurring the image progressively as the hinge opens or closes. 
 moving and it settles back into place. Your apps stay clickable and keep keyboard focus
 the whole time.
 
-![LidFold holding the desktop plane while the lid tilts](Docs/preview.png)
 
 ## Requirements
 
